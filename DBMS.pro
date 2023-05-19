@@ -17,7 +17,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     SQLanalysis.cpp \
-    btree.cpp \
+    btreee.cpp \
     convert.cpp \
     database.cpp \
     login.cpp \
@@ -29,6 +29,7 @@ SOURCES += \
 HEADERS += \
     SQLanalysis.h \
     btree.h \
+    btreee.h \
     convert.h \
     database.h \
     login.h \

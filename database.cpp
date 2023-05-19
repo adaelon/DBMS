@@ -4,8 +4,7 @@
 //展示数据库
 bool showdatabases(QString user,QString& databases)
 {
-    //QString folder = "D:/download/DBMS1.0/DBMS/"+user+"/database.txt";
-    QString folder = QDir::currentPath()+"/"+user+"/database.txt";
+    QString folder = "D:/download/DBMS1.0/DBMS/"+user+"/database.txt";
     //打开文件
     QFile file(folder);
     if(!file.open(QIODevice::ReadOnly | QIODevice::Text))

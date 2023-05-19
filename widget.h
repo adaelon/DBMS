@@ -12,6 +12,8 @@
 # include <bitset>
 # include <fstream>
 //#include <bits/stdc++.h>
+#include <QDateTime>
+#include<QMessageBox>
 #include "user.h"
 using namespace std;
 
@@ -28,6 +30,7 @@ public:
     ~Widget();
     void SetUser(QString username);
 
+
 private slots:
 
    // void on_pushButton_clicked();
@@ -36,7 +39,12 @@ private slots:
 
     void on_Execute_clicked();
 
+
     void on_pushButton_clicked();
+
+
+    void on_sql_clicked();
+
 
 private:
     Ui::Widget *ui;

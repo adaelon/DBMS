@@ -1,0 +1,3 @@
+a#char
+b#char
+c#number

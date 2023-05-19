@@ -11,4 +11,6 @@ using namespace std;
 int sqlAnalysis(QString sql,vector<QString> &sqlkey);
 
 int sqlAnalysisTable(QString sql,vector<QString> &sqlkey,QString DBname);
+
+int sqlAnalysisQuery(QString sql,vector<QString> &sqlkey,QString DBname);
 #endif // SQLANALYSIS_H

@@ -1,0 +1,20 @@
+create table b (a char);#2023.05.19 00:31:48
+drop from a where c = 2;#2023.05.19 07:03:44
+insert into a(a,b,c) values(a,b,1);#2023.05.19 07:17:10
+insert into a(a,b,c) values(q,w,2);#2023.05.19 07:17:19
+drop from a where c = 2;#2023.05.19 07:17:42
+insert into a(a,b,c) values (a,b,1);#2023.05.19 07:22:46
+insert into a(a,b,c) values (q,w,2);#2023.05.19 07:22:53
+drop from a where c = 2;#2023.05.19 07:23:11
+insert into a(a,b,c) values (a,b,1);#2023.05.19 07:28:24
+insert into a(a,b,c) values (q,w,2);#2023.05.19 07:28:31
+drop from a where c = 2;#2023.05.19 07:30:08
+insert into a(a,b,c) values(a,b,2);#2023.05.19 07:34:08
+insert into a(a,b,c) values(q,w,1);#2023.05.19 07:34:16
+drop from a where c = 2;#2023.05.19 07:35:34
+drop from a where c = 2;#2023.05.19 09:35:55
+insert into a(a,b,c) values(a,b,1);#2023.05.19 09:40:12
+drop from a where c = 1;#2023.05.19 09:41:25
+insert into a(a,b,c) values(a,b,1);#2023.05.19 09:48:41
+insert into a(a,b,c) values(q,w,2);#2023.05.19 09:48:50
+drop from a where c = 2;#2023.05.19 09:49:48

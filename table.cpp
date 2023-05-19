@@ -2,11 +2,6 @@
 #include<QDir>
 #include<QTextStream>
 
-//定义属性的结构
-struct column{
-    int attributeType;
-    int attributeLocation;
-};
 
 //属性判断：char 返回1，number 返回2，都不是返回0
 int judge(QString attribute)
@@ -32,7 +27,7 @@ column judgeColumn(QString user,QString DBname,QString tableName,QString attribu
       QFile file(folder);
      if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
      {
-         qDebug()<<"文件打开失败！";
+         qDebug()<<"fail to open file!";
      }
      else
      {
@@ -48,9 +43,9 @@ column judgeColumn(QString user,QString DBname,QString tableName,QString attribu
             line = in1.readLine();
             temp = line.split("#");
             //属性名匹配上，返回该属性的类型和位置
-            if(temp[1].compare(attributeName)==0)
+            if(temp[0].compare(attributeName)==0)
             {
-               col.attributeType=judge(temp[0]);
+               col.attributeType=judge(temp[1]);
                col.attributeLocation=number;
                return col;
             }
@@ -58,7 +53,7 @@ column judgeColumn(QString user,QString DBname,QString tableName,QString attribu
            }
 
      }
-     qDebug()<<"插入失败！";
+     qDebug()<<"fail to insert!";
      col.attributeLocation=-1;
      col.attributeType=-1;
      return col;
@@ -72,7 +67,7 @@ int judgeNumber(QString user,QString DBname,QString tableName)
      QFile file(folder);
      if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
      {
-         qDebug()<<"文件打开失败！";
+         qDebug()<<"fail to open file!";
      }
      else
      {
@@ -116,7 +111,7 @@ bool createTable(QString user,QString DBname,vector<QString> sqlkey)
          int attributeType;
          for(unsigned int i = 1;i<sqlkey.size();i = i+2)
          {
-             attributeType = judge(sqlkey.at(i));
+             attributeType = judge(sqlkey.at(i+1));
              if(attributeType > 0)
              {
               qts1<<sqlkey.at(i)+"#"+sqlkey.at(i+1)<<Qt::endl;
@@ -349,6 +344,8 @@ bool addField(QString user,QString DBname,vector<QString> sqlkey){
 
     }
 
+    file.close();
+
     return true;
 }
 
@@ -452,7 +449,258 @@ bool dropField(QString user,QString DBname,vector<QString> sqlkey){
     return true;
 }
 
-//创建索引
+//查询所有记录
+QStringList selectAll(QString user,QString DBname,vector<QString> sqlkey){
+
+    QString strAll;
+    QString strAllColumn;
+    QStringList strList;
+    QStringList strListTemp;
+    QStringList strListColumn;
+    QString field = "";
+    sqlkey.at(0) = sqlkey.at(0).toUpper();
+    //打开字段文件
+    QString folderColumn = "D:/download/DBMS1.0/DBMS/"+user+"/"+DBname+"/"+sqlkey.at(0)+"/column.txt";
+    QFile file1(folderColumn);
+    if(file1.open((QIODevice::ReadOnly|QIODevice::Text)))
+    {
+        //把文件所有信息读出来
+        QTextStream stream(&file1);
+        strAllColumn=stream.readAll();
+    }
+
+    strListTemp = strAllColumn.split("\n");
+    for(int i=0;i<strListTemp.count();i++){
+        QStringList temp = strListTemp.at(i).split("#");
+        if(temp.at(0)!="") strListColumn.push_back(temp.at(0));
+    }
+
+    for(int i=0;i<strListColumn.count();i++){
+        if(i==strListColumn.count()-1){
+            field+=strListColumn.at(i);
+        }else{
+            field+=strListColumn.at(i)+"#";
+        }
+    }
+
+
+
+
+
+
+    //打开记录文件
+    QString folder = "D:/download/DBMS1.0/DBMS/"+user+"/"+DBname+"/"+sqlkey.at(0)+"/record.txt";
+    QFile file(folder);
+
+    if(!file.open(QIODevice::ReadWrite | QIODevice::Text))
+    {
+
+        QStringList failReturn;
+        QString fail="fail to open file";
+        failReturn.push_back(fail);
+        return failReturn;
+    }
+    file.close();
+
+    if(file.open((QIODevice::ReadOnly|QIODevice::Text)))
+    {
+        //把文件所有信息读出来
+        QTextStream stream(&file);
+        strAll=stream.readAll();
+    }
+
+    strList=strAll.split("\n");
+    strList.push_front(field);
+
+
+    file.close();
+
+
+    return strList;
+
+}
+
+//查询指定字段的所有记录
+QStringList selectFieldAll(QString user,QString DBname,vector<QString> sqlkey){
+    QString strAll;
+    QString strAllColumn;
+    QStringList strList;
+    QStringList strListTemp;
+    QStringList strListColumn;
+    QString field = "";
+    sqlkey.at(0) = sqlkey.at(0).toUpper();
+
+
+
+
+
+
+
+    //打开记录文件
+    QString folder = "D:/download/DBMS1.0/DBMS/"+user+"/"+DBname+"/"+sqlkey.at(0)+"/record.txt";
+    QFile file(folder);
+
+    if(!file.open(QIODevice::ReadWrite | QIODevice::Text))
+    {
+
+        QStringList failReturn;
+        QString fail="fail to open file";
+        failReturn.push_back(fail);
+        return failReturn;
+    }
+    file.close();
+
+
+
+
+
+
+    if(file.open((QIODevice::ReadOnly|QIODevice::Text)))
+    {
+        //把文件所有信息读出来
+        QTextStream stream(&file);
+        strAllColumn=stream.readAll();
+
+
+    }
+    //获取列的数量
+    int number = sqlkey.at(1).toInt();
+
+
+    //将列的名称转为对应的属性和位置
+    vector<column> col;
+    for(int i=0;i<number;i++)
+    {
+        col.push_back(judgeColumn(user,DBname,sqlkey.at(0),sqlkey.at(2+i)));
+    }
+    //获取总的列的数量
+    int numberOfAttribute = judgeNumber(user,DBname,sqlkey.at(0));
+
+
+    strListTemp = strAllColumn.split("\n");
+
+
+    for(int i=1;i<strListTemp.count();i++){
+        QStringList temp = strListTemp.at(i).split("#");
+        QString temp1="";
+        for(int j =0 ;j<number;j++){
+            if(temp.at(0)!="") temp1+=temp.at(col[j].attributeLocation)+"#";
+
+        }
+        if(i!=strListTemp.count()-1 )temp1+="\n";
+        strListColumn.push_back(temp1);
+    }
+
+    for(int j =0 ;j<number;j++){
+        field+=sqlkey.at(2+j);
+        field+="#";
+    }
+
+    strListColumn.push_front(field);
+
+    file.close();
+
+
+    return strListColumn;
+}
+
+
+//查询指定字段和where条件的记录
+QStringList selectWhere(QString user,QString DBname,vector<QString> sqlkey){
+    QString strAll;
+    QString strAllColumn;
+    QStringList strList;
+    QStringList strListTemp;
+    QStringList strListColumn;
+    QString field = "";
+    sqlkey.at(0) = sqlkey.at(0).toUpper();
+
+
+
+
+
+
+
+    //打开记录文件
+    QString folder = "D:/download/DBMS1.0/DBMS/"+user+"/"+DBname+"/"+sqlkey.at(0)+"/record.txt";
+    QFile file(folder);
+
+    if(!file.open(QIODevice::ReadWrite | QIODevice::Text))
+    {
+
+        QStringList failReturn;
+        QString fail="fail to open file";
+        failReturn.push_back(fail);
+        return failReturn;
+    }
+    file.close();
+
+
+
+
+
+
+    if(file.open((QIODevice::ReadOnly|QIODevice::Text)))
+    {
+        //把文件所有信息读出来
+        QTextStream stream(&file);
+        strAllColumn=stream.readAll();
+
+
+    }
+    //获取列的数量
+    int number = sqlkey.at(1).toInt();
+
+
+    //将列的名称转为对应的属性和位置
+    vector<column> col;
+    for(int i=0;i<number;i++)
+    {
+        col.push_back(judgeColumn(user,DBname,sqlkey.at(0),sqlkey.at(2+i)));
+    }
+
+
+    QString colmnName =sqlkey.at(number+2);
+    QString colmnJudge =sqlkey.at(number+3);
+
+    column target = judgeColumn(user,DBname,sqlkey.at(0),colmnName);
+
+    //获取总的列的数量
+    int numberOfAttribute = judgeNumber(user,DBname,sqlkey.at(0));
+
+
+    strListTemp = strAllColumn.split("\n");
+
+
+    for(int i=1;i<strListTemp.count();i++){
+        QStringList temp = strListTemp.at(i).split("#");
+        QString temp1="";
+        int sign=0;
+        for(int j =0 ;j<number;j++){
+            if(temp.at(0)!=""&&temp.at(target.attributeLocation)==colmnJudge){
+                temp1+=temp.at(col[j].attributeLocation)+"#";
+                sign=1;
+            }
+
+        }
+        if(i!=strListTemp.count()-1 && sign==1)temp1+="\n";
+        if(sign ==1) strListColumn.push_back(temp1);
+    }
+
+    for(int j =0 ;j<number;j++){
+        field+=sqlkey.at(2+j);
+        field+="#";
+    }
+
+    strListColumn.push_front(field);
+
+    file.close();
+
+
+    return strListColumn;
+}
+
+
 bool createIndex(QString user,QString DBname,vector<QString> sqlkey)
 {
         //获取相应列的位置
@@ -463,7 +711,7 @@ bool createIndex(QString user,QString DBname,vector<QString> sqlkey)
         QFile file(folder);
         if(!file.open(QIODevice::ReadOnly | QIODevice::Text))
         {
-            qDebug()<<"文件打开失败！";
+            qDebug()<<"fail to open file!";
             return false;
         }
         else
@@ -495,3 +743,221 @@ bool createIndex(QString user,QString DBname,vector<QString> sqlkey)
 
 }
 
+bool updateTable(QString user,QString DBname,vector<QString> sqlkey){
+    QString strAll;
+    QString strAllColumn;
+    QStringList strList;
+    QStringList strListTemp;
+    QStringList strListColumn;
+    QString field = "";
+    sqlkey.at(0) = sqlkey.at(0).toUpper();
+
+
+
+
+
+
+
+    //打开记录文件
+    QString folder = "D:/download/DBMS1.0/DBMS/"+user+"/"+DBname+"/"+sqlkey.at(0)+"/record.txt";
+    QFile file(folder);
+
+    if(file.open((QIODevice::ReadOnly|QIODevice::Text)))
+    {
+        //把文件所有信息读出来
+        QTextStream stream(&file);
+        strAllColumn=stream.readAll();
+
+
+    }else{
+        return false;
+    }
+
+    file.close();
+
+    //获取列的数量
+    int number = sqlkey.at(1).toInt();
+    //将列的名称转为对应的属性和位置
+    vector<column> col;
+    for(int i=0;i<number;i++)
+    {
+        qDebug()<<sqlkey.at(2+i);
+        col.push_back(judgeColumn(user,DBname,sqlkey.at(0),sqlkey.at(2+i)));
+    }
+
+    vector<QString> afterValue;
+    for(int i=number;i<2*number;i++)
+    {
+        afterValue.push_back(sqlkey.at(2+i));
+    }
+
+
+    QString colmnName =sqlkey.at(2*number+2);
+    QString colmnJudge =sqlkey.at(2*number+3);
+
+
+    column target = judgeColumn(user,DBname,sqlkey.at(0),colmnName);
+
+    //获取总的列的数量
+    int numberOfAttribute = judgeNumber(user,DBname,sqlkey.at(0));
+
+
+    strListTemp = strAllColumn.split("\n");
+
+
+
+    for(int i=1;i<strListTemp.count();i++){
+        QStringList temp = strListTemp.at(i).split("#");
+        QString temp1="";
+        int sign=0;
+        for(int j =0 ;j<numberOfAttribute;j++){
+
+
+            if(temp.at(0)!=""&&temp.at(target.attributeLocation)==colmnJudge){
+
+
+                    if(j==col[j].attributeLocation&&j!=numberOfAttribute-1){
+                        temp1+=afterValue[j]+"#";
+                    }else{
+                        temp1+=afterValue[j];
+                    }
+
+
+
+            }else{
+                if(j!=numberOfAttribute-1) temp1+=temp.at(j)+"#";
+                else temp1+=temp.at(j);
+            }
+
+        }
+        if(i!=strListTemp.count()-1) temp1+="\n";
+        strListColumn.push_back(temp1);
+    }
+    QString temo = strAllColumn.at(0);
+    int tempInt = temo.toInt();
+    strListColumn.push_front(QString::number(tempInt));
+
+
+    if(!file.open(QIODevice::WriteOnly|QIODevice::Text))
+    {
+
+        return false;
+
+    }else{
+
+        QTextStream stream(&file);
+
+
+        for(int i=0;i<strListColumn.count();i++){
+             stream<<strListColumn.at(i)<<Qt::endl;
+        }
+
+
+
+
+    }
+
+    file.close();
+
+
+
+
+    return true;
+}
+bool dropRecord(QString user,QString DBname,vector<QString> sqlkey){
+    QString strAll;
+    QString strAllColumn;
+    QStringList strList;
+    QStringList strListTemp;
+    QStringList strListColumn;
+    QString field = "";
+    sqlkey.at(0) = sqlkey.at(0).toUpper();
+
+
+
+
+
+
+
+    //打开记录文件
+    QString folder = "D:/download/DBMS1.0/DBMS/"+user+"/"+DBname+"/"+sqlkey.at(0)+"/record.txt";
+    QFile file(folder);
+
+    if(file.open((QIODevice::ReadOnly|QIODevice::Text)))
+    {
+        //把文件所有信息读出来
+        QTextStream stream(&file);
+        strAllColumn=stream.readAll();
+
+
+    }else{
+        return false;
+    }
+
+    file.close();
+
+
+    QString colmnName =sqlkey.at(1);
+    QString colmnJudge =sqlkey.at(2);
+
+    column target = judgeColumn(user,DBname,sqlkey.at(0),colmnName);
+
+    //获取总的列的数量
+    int numberOfAttribute = judgeNumber(user,DBname,sqlkey.at(0));
+
+
+    strListTemp = strAllColumn.split("\n");
+
+
+
+    for(int i=1;i<strListTemp.count();i++){
+        QStringList temp = strListTemp.at(i).split("#");
+        QString temp1="";
+        int sign=0;
+        for(int j =0 ;j<numberOfAttribute;j++){
+
+            if(j!=numberOfAttribute-1) temp1+=temp.at(j)+"#";
+            else temp1+=temp.at(j);
+
+            if(temp.at(0)!=""&&temp.at(target.attributeLocation)==colmnJudge){
+
+                sign=1;
+
+            }
+
+        }
+        if(i!=strListTemp.count()-1)temp1+="\n";
+        if(sign ==0) strListColumn.push_back(temp1);
+    }
+
+    QString temo = strAllColumn.at(0);
+    int tempInt = temo.toInt()-1;
+    strListColumn.push_front(QString::number(tempInt));
+
+
+    if(!file.open(QIODevice::WriteOnly|QIODevice::Text))
+    {
+
+        return false;
+
+    }else{
+
+        QTextStream stream(&file);
+
+
+        for(int i=0;i<strListColumn.count();i++){
+             stream<<strListColumn.at(i)<<Qt::endl;
+        }
+
+
+
+
+    }
+
+    file.close();
+
+
+
+
+    return true;
+}

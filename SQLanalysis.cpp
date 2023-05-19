@@ -69,9 +69,18 @@ int sqlAnalysisTable(QString sql,vector<QString> &sqlkey,QString DBname)
     regVector.push_back(QString("alter\\s+table\\s+([^\\s]+)\\s+modify\\s+column\\s+([^\\s]+)\\s+([^\\s]+)\\s*;"));
     //匹配删除字段的正则：5
     regVector.push_back(QString("alter\\s+table\\s+([^\\s]+)\\s+drop\\s+column\\s+([^\\s]+)\\s+([^\\s]+)\\s*;"));
-    //匹配创建索引的正则：6
+    //匹配创建查询所有记录的正则：6
+    regVector.push_back(QString("select\\s+\\*\\s+from\\s+([^\\s]+)*;"));
+    //匹配查询指定字段的所有记录的正则：7
+    regVector.push_back(QString("select\\s*([^\\)]+)\\s*from\\s+([^\\s]+)\\s*;"));
+    //匹配查询指定字段带where条件的记录的正则：8
+    regVector.push_back(QString("select\\s*([^\\)]+)\\s*from\\s+([^\\s]+)\\s+where\\s+([^\\s]+)\\s+\\=\\s+([^\\s]+)\\s*;"));
+    //匹配创建索引的正则：9
     regVector.push_back(QString("create\\s+index\\s+(\\w+)\\s+on\\s+(\\w+)\\s*\\(([^\\)]+)\\)\\s*;"));
-
+    //匹配修改记录的正则：10
+    regVector.push_back(QString("update\\s+([^\\s]+)\\s+set\\s*\\((.*)\\)\\s+where\\s+([^\\s]+)\\s+\\=\\s+([^\\s]+)\\s*;"));
+    //匹配删除记录的正则：11
+    regVector.push_back(QString("drop\\s+from\\s+([^\\s]+)\\s+where\\s+([^\\s]+)\\s+\\=\\s+([^\\s]+)\\s*;"));
 
     //开始解析sql语句
 
@@ -93,6 +102,7 @@ int sqlAnalysisTable(QString sql,vector<QString> &sqlkey,QString DBname)
                 QString columnType = columnMatch.captured(2);
                 sqlkey.push_back(columnName);
                 sqlkey.push_back(columnType);
+
 
             }
             return 0;
@@ -192,17 +202,83 @@ int sqlAnalysisTable(QString sql,vector<QString> &sqlkey,QString DBname)
           return 5;
         }
 
-        //是否符合创建索引的语法
-        QRegularExpression re6(regVector[6],QRegularExpression::CaseInsensitiveOption);
 
-         QRegularExpressionMatch match6 = re6.match(sql);
-         if (match6.hasMatch()) {
+        //是否符合查询所有记录的语法
+        QRegularExpression re6(regVector[6],QRegularExpression::CaseInsensitiveOption);
+        QRegularExpressionMatch match6 = re6.match(sql);
+        if(match6.hasMatch())
+        {
+            QString tableName = match6.captured(1);
+
+
+            sqlkey.push_back(tableName);
+
+
+            return 6;
+        }
+
+
+
+        //是否符合查询指定字段所有记录的语法
+
+       QRegularExpression re7(regVector[7],QRegularExpression::CaseInsensitiveOption);
+
+        QRegularExpressionMatch match7 = re7.match(sql);
+
+        if (match7.hasMatch()) {
+            QString tableName = match7.captured(2);
+               QStringList columns = match7.captured(1).split(",");
+
+             //存储表名
+            sqlkey.push_back(tableName);
+            //存储列数量
+            sqlkey.push_back(QString::number(columns.size()));
+            //存储列名
+            for(int i=0;i<columns.size();i++)
+               sqlkey.push_back(columns.at(i).simplified());
+
+
+          return 7;
+        }
+
+
+        //是否符合查询指定字段带where条件的记录的语法
+
+       QRegularExpression re8(regVector[8],QRegularExpression::CaseInsensitiveOption);
+
+        QRegularExpressionMatch match8 = re8.match(sql);
+
+        if (match8.hasMatch()) {
+            QString tableName = match8.captured(2);
+               QStringList columns = match8.captured(1).split(",");
+               QString columnName = match8.captured(3);
+               QString columnJudge = match8.captured(4);
+
+             //存储表名
+            sqlkey.push_back(tableName);
+            //存储列数量
+            sqlkey.push_back(QString::number(columns.size()));
+            //存储列名
+            for(int i=0;i<columns.size();i++)
+               sqlkey.push_back(columns.at(i).simplified());
+            sqlkey.push_back(columnName);
+            sqlkey.push_back(columnJudge);
+
+
+          return 8;
+        }
+
+        //是否符合创建索引的语法
+        QRegularExpression re9(regVector[9],QRegularExpression::CaseInsensitiveOption);
+
+         QRegularExpressionMatch match9 = re9.match(sql);
+         if (match9.hasMatch()) {
              // 获取索引名
-             QString indexName = match6.captured(1);
+             QString indexName = match9.captured(1);
              //获取表名
-             QString tableName = match6.captured(2);
+             QString tableName = match9.captured(2);
              // 获取列名
-             QString columns = match6.captured(3);
+             QString columns = match9.captured(3);
 
              // 存取索引名称
              sqlkey.push_back(indexName);
@@ -211,10 +287,61 @@ int sqlAnalysisTable(QString sql,vector<QString> &sqlkey,QString DBname)
              //存储列数量
              sqlkey.push_back(columns);
 
-           return 6;
+           return 9;
          }
 
 
+         //是否符合修改记录的语法
+
+        QRegularExpression re10(regVector[10],QRegularExpression::CaseInsensitiveOption);
+
+         QRegularExpressionMatch match10 = re10.match(sql);
+
+         if (match10.hasMatch()) {
+             QString tableName = match10.captured(1);
+                QStringList columns = match10.captured(2).split(",");
+                QStringList values = match10.captured(3).split(" ");
+                QString columnName = match10.captured(4);
+                QString columnJudge = match10.captured(5);
+
+              //存储表名
+             sqlkey.push_back(tableName);
+             //存储列数量
+             sqlkey.push_back(QString::number(columns.size()));
+             //存储列名
+             for(int i=0;i<columns.size();i++)
+                sqlkey.push_back(columns.at(i).simplified());
+             //存储数值
+             for(int i=0;i<values.size();i++)
+                sqlkey.push_back(values.at(i).simplified());
+
+             sqlkey.push_back(columnName);
+             sqlkey.push_back(columnJudge);
+
+           return 10;
+         }
+
+         //删除记录的语法
+
+        QRegularExpression re11(regVector[11],QRegularExpression::CaseInsensitiveOption);
+
+         QRegularExpressionMatch match11 = re11.match(sql);
+
+         if (match11.hasMatch()) {
+             QString tableName = match11.captured(1);
+
+                QString columnName = match11.captured(2);
+                QString columnJudge = match11.captured(3);
+
+              //存储表名
+             sqlkey.push_back(tableName);
+
+             sqlkey.push_back(columnName);
+             sqlkey.push_back(columnJudge);
+
+
+           return 11;
+         }
 
         for (unsigned int i = 0; i < regVector.size(); i++)
         {
@@ -234,6 +361,35 @@ int sqlAnalysisTable(QString sql,vector<QString> &sqlkey,QString DBname)
                 return 2;
             }
         }
+
+    return -1;
+
+}
+
+
+int sqlAnalysisQuery(QString sql,vector<QString> &sqlkey,QString DBname)
+{
+    //存放正则表达式
+    vector<QString> regVector;
+    //匹配创建查询所有记录的正则：0
+    regVector.push_back(QString("select\\s+\\*\\s+from\\s+([^\\s]+)*;"));
+
+    //开始解析sql语句
+
+        //是否符合查询所有记录的语法
+        QRegularExpression re(regVector[0],QRegularExpression::CaseInsensitiveOption);
+        QRegularExpressionMatch match = re.match(sql);
+        if(match.hasMatch())
+        {
+            QString tableName = match.captured(1);
+
+
+            sqlkey.push_back(tableName);
+
+
+            return 0;
+        }
+
 
     return -1;
 

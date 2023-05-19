@@ -84,6 +84,30 @@ QPushButton:hover {
     <string>用户数据库备份</string>
    </property>
   </widget>
+  <widget class="QPushButton" name="sql">
+   <property name="geometry">
+    <rect>
+     <x>340</x>
+     <y>370</y>
+     <width>111</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QPushButton {
+border-radius:10px;
+border:2px solid #000000;
+}
+
+QPushButton:hover {
+    background-color: #ecf5ff;
+    color: #409eff;
+}</string>
+   </property>
+   <property name="text">
+    <string>sql文件</string>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections/>
